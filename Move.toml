@@ -1,0 +1,18 @@
+# FILE: Move.toml
+[package]
+name = "greenshare"
+version = "1.0.0"
+edition = "2024.beta"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
+MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "framework/testnet" }
+
+[addresses]
+greenshare = "0x0"
+sui = "0x2"
+std = "0x1"
+
+[dev-dependencies]
+
+[dev-addresses]

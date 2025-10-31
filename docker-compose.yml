@@ -1,0 +1,225 @@
+# FILE: docker-compose.yml
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: greenshare-postgres
+    environment:
+      POSTGRES_DB: greenshare
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - greenshare-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: greenshare-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - greenshare-network
+
+  # ROFL TEE Enclave
+  rofl-enclave:
+    build:
+      context: .
+      dockerfile: Dockerfile.rofl
+    container_name: greenshare-rofl
+    environment:
+      - ROFL_HOST=0.0.0.0
+      - ROFL_PORT=8080
+      - ROFL_AGG_WINDOW_SEC=300
+      - ROFL_MAX_RECORDS_PER_WINDOW=1000
+      - ROFL_OUTPUT_DIR=/app/proofs
+      - ROFL_ENABLE_SIG_VERIFICATION=true
+      - WALRUS_PUBLISHER_URL=http://mock-walrus:8081/mock
+      - WALRUS_GATEWAY_URL=http://mock-walrus:8081/mock
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/greenshare
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "8080:8080"
+    volumes:
+      - rofl_proofs:/app/proofs
+      - rofl_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - greenshare-network
+    restart: unless-stopped
+
+  # Mock Walrus Server
+  mock-walrus:
+    build:
+      context: .
+      dockerfile: Dockerfile.walrus
+    container_name: greenshare-mock-walrus
+    environment:
+      - MOCK_WALRUS_PORT=8081
+      - NODE_ENV=development
+    ports:
+      - "8081:8081"
+    volumes:
+      - walrus_storage:/app/mock-storage
+      - walrus_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - greenshare-network
+    restart: unless-stopped
+
+  # Frontend (Development)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      target: development
+    container_name: greenshare-frontend
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - NEXT_PUBLIC_ROFL_ENDPOINT=http://localhost:8080
+      - NEXT_PUBLIC_WALRUS_GATEWAY_URL=http://localhost:8081/mock
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - rofl-enclave
+      - mock-walrus
+    networks:
+      - greenshare-network
+    restart: unless-stopped
+
+  # Mock Sui Node (for local testing)
+  sui-node:
+    image: mysten/sui-tools:testnet
+    container_name: greenshare-sui-node
+    command: ["sui-test-validator", "--with-faucet", "--faucet-port", "9123"]
+    ports:
+      - "9000:9000"  # RPC
+      - "9123:9123"  # Faucet
+    volumes:
+      - sui_data:/opt/sui/db
+    networks:
+      - greenshare-network
+    restart: unless-stopped
+
+  # Prometheus (Monitoring)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: greenshare-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - greenshare-network
+    profiles:
+      - monitoring
+
+  # Grafana (Dashboards)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: greenshare-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    networks:
+      - greenshare-network
+    profiles:
+      - monitoring
+
+  # Nginx (Reverse Proxy)
+  nginx:
+    image: nginx:alpine
+    container_name: greenshare-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - rofl-enclave
+      - mock-walrus
+    networks:
+      - greenshare-network
+    profiles:
+      - production
+
+# Network configuration
+networks:
+  greenshare-network:
+    driver: bridge
+    name: greenshare_network
+
+# Volume configuration
+volumes:
+  postgres_data:
+    name: greenshare_postgres_data
+  redis_data:
+    name: greenshare_redis_data
+  rofl_proofs:
+    name: greenshare_rofl_proofs
+  rofl_logs:
+    name: greenshare_rofl_logs
+  walrus_storage:
+    name: greenshare_walrus_storage
+  walrus_logs:
+    name: greenshare_walrus_logs
+  sui_data:
+    name: greenshare_sui_data
+  prometheus_data:
+    name: greenshare_prometheus_data
+  grafana_data:
+    name: greenshare_grafana_data

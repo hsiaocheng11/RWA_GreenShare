@@ -1,0 +1,52 @@
+# FILE: Cargo.toml
+[package]
+name = "rofl-enclave"
+version = "1.0.0"
+edition = "2021"
+description = "ROFL Enclave for GreenShare - TEE aggregation and verification of smart meter data"
+authors = ["GreenShare Team"]
+license = "MIT"
+
+[dependencies]
+# Web framework
+actix-web = "4.4"
+actix-cors = "0.6"
+tokio = { version = "1.35", features = ["full"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Environment and configuration
+dotenv = "0.15"
+env_logger = "0.10"
+log = "0.4"
+
+# Cryptography
+secp256k1 = "0.28"
+sha2 = "0.10"
+sha3 = "0.10"
+hex = "0.4"
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# HTTP client for Seal endpoint
+reqwest = { version = "0.11", features = ["json"] }
+
+# UUID for tracking
+uuid = { version = "1.6", features = ["v4", "serde"] }
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+[dev-dependencies]
+# Testing
+actix-rt = "2.9"
+actix-test = "0.1"
+tokio-test = "0.4"
+
+[[bin]]
+name = "rofl-enclave"
+path = "src/main.rs"

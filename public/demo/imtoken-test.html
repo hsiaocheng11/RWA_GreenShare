@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>imToken Deep Link Testing - GreenShare</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f9fafb;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #059669;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .button:hover {
+            background: #047857;
+        }
+        .button.secondary {
+            background: #6b7280;
+        }
+        .button.secondary:hover {
+            background: #4b5563;
+        }
+        .code {
+            background: #f3f4f6;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+        .status {
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        .status.warning {
+            background: #fffbeb;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+        .status.error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        h1, h2 {
+            color: #111827;
+        }
+        h3 {
+            color: #374151;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌱 GreenShare imToken Integration Test</h1>
+    
+    <div class="container">
+        <h3>📱 Device Detection</h3>
+        <div id="detection-status"></div>
+        <button class="button secondary" onclick="detectDevice()">Refresh Detection</button>
+    </div>
+
+    <div class="grid">
+        <div class="container">
+            <h3>🔗 Connection Test</h3>
+            <p>Test connecting to imToken wallet</p>
+            <a href="#" class="button" onclick="testConnect()">Connect imToken</a>
+            <div class="code" id="connect-link"></div>
+        </div>
+
+        <div class="container">
+            <h3>💳 Payment Test</h3>
+            <p>Test one-click payment (0.005 ETH)</p>
+            <a href="#" class="button" onclick="testPayment()">Pay 0.005 ETH</a>
+            <div class="code" id="payment-link"></div>
+        </div>
+
+        <div class="container">
+            <h3>🌉 Cross-Chain Test</h3>
+            <p>Test cross-chain bridge (sKWH → eKWH)</p>
+            <a href="#" class="button" onclick="testBridge()">Bridge 100 sKWH</a>
+            <div class="code" id="bridge-link"></div>
+        </div>
+
+        <div class="container">
+            <h3>📱 QR Code Test</h3>
+            <p>Generate QR code for mobile scanning</p>
+            <button class="button secondary" onclick="generateQR()">Generate QR</button>
+            <div id="qr-container"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h3>🧪 Test Results</h3>
+        <div id="test-results"></div>
+        <button class="button secondary" onclick="clearResults()">Clear Results</button>
+    </div>
+
+    <div class="container">
+        <h3>📖 Instructions</h3>
+        <ol>
+            <li><strong>On Mobile:</strong> Install imToken from App Store/Google Play</li>
+            <li><strong>Open this page</strong> on your mobile device</li>
+            <li><strong>Click the buttons above</strong> to test deep link functionality</li>
+            <li><strong>Verify</strong> that imToken opens correctly</li>
+        </ol>
+        
+        <h4>Expected Behavior:</h4>
+        <ul>
+            <li>✅ <strong>Mobile + imToken:</strong> Buttons open imToken app</li>
+            <li>⚠️ <strong>Mobile without imToken:</strong> Shows install prompt</li>
+            <li>❌ <strong>Desktop:</strong> Shows "Protocol not supported"</li>
+        </ul>
+    </div>
+
+    <script>
+        // Test configuration
+        const TEST_CONFIG = {
+            recipient: '0x742d35cc6cf004b4d6e8b0b1c5b2e7a5f1234567',
+            dappUrl: window.location.origin,
+            callbackUrl: window.location.origin + '/callback'
+        };
+
+        // Device detection
+        function detectDevice() {
+            const ua = navigator.userAgent.toLowerCase();
+            const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua);
+            const isImToken = ua.includes('imtoken');
+            const platform = /iphone|ipad|ipod/.test(ua) ? 'iOS' : 
+                           /android/.test(ua) ? 'Android' : 'Desktop';
+
+            const status = document.getElementById('detection-status');
+            status.innerHTML = `
+                <div class="status ${isMobile ? 'success' : 'warning'}">
+                    📱 Platform: ${platform} ${isMobile ? '(Mobile)' : '(Desktop)'}
+                </div>
+                <div class="status ${isImToken ? 'success' : 'warning'}">
+                    🔍 imToken Detected: ${isImToken ? 'Yes' : 'No'}
+                </div>
+                <div class="status success">
+                    🌐 User Agent: ${navigator.userAgent}
+                </div>
+            `;
+        }
+
+        // Generate deep links
+        function generateDeepLink(action, params = {}) {
+            const baseUrl = 'imtoken://';
+            const queryParams = new URLSearchParams(params);
+            return `${baseUrl}${action}?${queryParams.toString()}`;
+        }
+
+        // Test connection
+        function testConnect() {
+            const link = generateDeepLink('dapp', {
+                dappUrl: TEST_CONFIG.dappUrl,
+                dappName: 'GreenShare',
+                callbackUrl: TEST_CONFIG.callbackUrl
+            });
+            
+            document.getElementById('connect-link').textContent = link;
+            logResult('Connection Test', link, 'Attempting to open imToken...');
+            
+            try {
+                window.location.href = link;
+            } catch (error) {
+                logResult('Connection Test', link, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Test payment
+        function testPayment() {
+            const link = generateDeepLink('send', {
+                address: TEST_CONFIG.recipient,
+                amount: '0.005',
+                chainId: '48899'
+            });
+            
+            document.getElementById('payment-link').textContent = link;
+            logResult('Payment Test', link, 'Attempting to open payment in imToken...');
+            
+            try {
+                window.location.href = link;
+            } catch (error) {
+                logResult('Payment Test', link, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Test bridge
+        function testBridge() {
+            const link = generateDeepLink('crosschain', {
+                fromChain: '101',
+                toChain: '48899',
+                token: 'sKWH',
+                amount: '100',
+                recipient: TEST_CONFIG.recipient
+            });
+            
+            document.getElementById('bridge-link').textContent = link;
+            logResult('Bridge Test', link, 'Attempting to open cross-chain bridge in imToken...');
+            
+            try {
+                window.location.href = link;
+            } catch (error) {
+                logResult('Bridge Test', link, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Generate QR code (placeholder)
+        function generateQR() {
+            const paymentLink = generateDeepLink('send', {
+                address: TEST_CONFIG.recipient,
+                amount: '0.005',
+                chainId: '48899'
+            });
+
+            document.getElementById('qr-container').innerHTML = `
+                <div style="text-align: center; margin-top: 16px;">
+                    <div style="display: inline-block; padding: 20px; background: white; border: 2px solid #e5e7eb; border-radius: 8px;">
+                        <div style="width: 200px; height: 200px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #6b7280;">
+                            QR Code Placeholder<br/>
+                            (200x200px)<br/>
+                            <small>Use QR library in production</small>
+                        </div>
+                    </div>
+                    <p style="margin-top: 12px; font-size: 12px; color: #6b7280;">
+                        Scan with imToken to pay 0.005 ETH
+                    </p>
+                    <div class="code">${paymentLink}</div>
+                </div>
+            `;
+        }
+
+        // Log test results
+        function logResult(testName, link, message, type = 'success') {
+            const results = document.getElementById('test-results');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            results.innerHTML = `
+                <div class="status ${type}">
+                    <strong>[${timestamp}] ${testName}:</strong> ${message}
+                    <div class="code">${link}</div>
+                </div>
+            ` + results.innerHTML;
+        }
+
+        // Clear results
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', function() {
+            detectDevice();
+            
+            // Check if page was opened from deep link
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('from') === 'imtoken') {
+                logResult('Callback', window.location.href, 'Successfully returned from imToken!', 'success');
+            }
+        });
+
+        // Listen for page visibility changes (when returning from imToken)
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                logResult('Page Focus', 'N/A', 'Page became visible (possibly returned from imToken)', 'success');
+            }
+        });
+    </script>
+</body>
+</html>

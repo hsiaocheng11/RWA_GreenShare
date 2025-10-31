@@ -1,0 +1,216 @@
+{
+  "testnet": {
+    "sui": {
+      "network": "testnet",
+      "rpc": "https://fullnode.testnet.sui.io:443",
+      "faucet": "https://faucet.testnet.sui.io/gas",
+      "explorer": "https://suiexplorer.com/?network=testnet",
+      "contracts": {
+        "sKWH": {
+          "packageId": "0x...",
+          "treasuryCapId": "0x...",
+          "quotaLedgerId": "0x...",
+          "adminCapId": "0x..."
+        },
+        "certificate": {
+          "packageId": "0x...",
+          "publisherCapId": "0x...",
+          "registryId": "0x...",
+          "transferPolicyId": "0x..."
+        },
+        "walrusSeal": {
+          "packageId": "0x...",
+          "blobRegistryId": "0x...",
+          "adminCapId": "0x..."
+        }
+      }
+    },
+    "zircuit": {
+      "network": "testnet",
+      "chainId": 48899,
+      "rpc": "https://zircuit1-testnet.p2pify.com/",
+      "explorer": "https://explorer.testnet.zircuit.com",
+      "currency": {
+        "name": "Ethereum",
+        "symbol": "ETH",
+        "decimals": 18
+      },
+      "contracts": {
+        "eKWH": {
+          "address": "0x...",
+          "deploymentBlock": 1000000,
+          "abi": "./abis/eKWH.json"
+        },
+        "bridge": {
+          "address": "0x...",
+          "deploymentBlock": 1000001,
+          "abi": "./abis/Bridge.json"
+        },
+        "verifier": {
+          "address": "0x...",
+          "deploymentBlock": 1000002,
+          "abi": "./abis/MockVerifier.json"
+        },
+        "gudEngine": {
+          "address": "0x...",
+          "deploymentBlock": 1000003,
+          "abi": "./abis/MockGudEngine.json"
+        },
+        "gudAdapter": {
+          "address": "0x...",
+          "deploymentBlock": 1000004,
+          "abi": "./abis/GudAdapter.json"
+        }
+      }
+    },
+    "celo": {
+      "network": "alfajores",
+      "chainId": 44787,
+      "rpc": "https://alfajores-forno.celo-testnet.org",
+      "explorer": "https://explorer.celo.org/alfajores",
+      "currency": {
+        "name": "Celo",
+        "symbol": "CELO",
+        "decimals": 18
+      },
+      "contracts": {
+        "verifier": {
+          "address": "0x...",
+          "deploymentBlock": 2000000,
+          "abi": "./abis/Verifier.json"
+        },
+        "kycRegistry": {
+          "address": "0x...",
+          "deploymentBlock": 2000001,
+          "abi": "./abis/KYCRegistry.json"
+        }
+      }
+    }
+  },
+  "mainnet": {
+    "sui": {
+      "network": "mainnet",
+      "rpc": "https://fullnode.mainnet.sui.io:443",
+      "explorer": "https://suiexplorer.com",
+      "contracts": {
+        "sKWH": {
+          "packageId": "0x...",
+          "treasuryCapId": "0x...",
+          "quotaLedgerId": "0x...",
+          "adminCapId": "0x..."
+        },
+        "certificate": {
+          "packageId": "0x...",
+          "publisherCapId": "0x...",
+          "registryId": "0x...",
+          "transferPolicyId": "0x..."
+        },
+        "walrusSeal": {
+          "packageId": "0x...",
+          "blobRegistryId": "0x...",
+          "adminCapId": "0x..."
+        }
+      }
+    },
+    "zircuit": {
+      "network": "mainnet",
+      "chainId": 48900,
+      "rpc": "https://zircuit1-mainnet.p2pify.com/",
+      "explorer": "https://explorer.zircuit.com",
+      "currency": {
+        "name": "Ethereum",
+        "symbol": "ETH",
+        "decimals": 18
+      },
+      "contracts": {
+        "eKWH": {
+          "address": "0x...",
+          "deploymentBlock": 10000000,
+          "abi": "./abis/eKWH.json"
+        },
+        "bridge": {
+          "address": "0x...",
+          "deploymentBlock": 10000001,
+          "abi": "./abis/Bridge.json"
+        },
+        "verifier": {
+          "address": "0x...",
+          "deploymentBlock": 10000002,
+          "abi": "./abis/MockVerifier.json"
+        },
+        "gudEngine": {
+          "address": "0x...",
+          "deploymentBlock": 10000003,
+          "abi": "./abis/MockGudEngine.json"
+        },
+        "gudAdapter": {
+          "address": "0x...",
+          "deploymentBlock": 10000004,
+          "abi": "./abis/GudAdapter.json"
+        }
+      }
+    },
+    "celo": {
+      "network": "mainnet",
+      "chainId": 42220,
+      "rpc": "https://forno.celo.org",
+      "explorer": "https://explorer.celo.org",
+      "currency": {
+        "name": "Celo",
+        "symbol": "CELO",
+        "decimals": 18
+      },
+      "contracts": {
+        "verifier": {
+          "address": "0x...",
+          "deploymentBlock": 20000000,
+          "abi": "./abis/Verifier.json"
+        },
+        "kycRegistry": {
+          "address": "0x...",
+          "deploymentBlock": 20000001,
+          "abi": "./abis/KYCRegistry.json"
+        }
+      }
+    }
+  },
+  "services": {
+    "walrus": {
+      "testnet": {
+        "publisher": "https://publisher.walrus-testnet.walrus.space",
+        "aggregator": "https://aggregator.walrus-testnet.walrus.space",
+        "gateway": "https://walrus.site"
+      },
+      "mainnet": {
+        "publisher": "https://publisher.walrus.space",
+        "aggregator": "https://aggregator.walrus.space",
+        "gateway": "https://walrus.site"
+      }
+    },
+    "rofl": {
+      "testnet": {
+        "endpoint": "http://localhost:8080",
+        "apiVersion": "v1"
+      },
+      "mainnet": {
+        "endpoint": "https://rofl.greenshare.energy",
+        "apiVersion": "v1"
+      }
+    },
+    "analytics": {
+      "testnet": {
+        "endpoint": "https://analytics-testnet.greenshare.energy"
+      },
+      "mainnet": {
+        "endpoint": "https://analytics.greenshare.energy"
+      }
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2024-01-01T00:00:00Z",
+    "description": "GreenShare contract addresses and service endpoints",
+    "networks": ["sui", "zircuit", "celo"],
+    "environments": ["testnet", "mainnet"]
+  }
+}

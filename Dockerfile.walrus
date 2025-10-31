@@ -1,0 +1,77 @@
+# FILE: Dockerfile.walrus
+FROM node:18-alpine as builder
+
+# Install build dependencies
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    git
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY pnpm-lock.yaml* ./
+
+# Install dependencies
+RUN npm install -g pnpm && \
+    pnpm install --frozen-lockfile
+
+# Copy TypeScript configuration
+COPY tsconfig.json ./
+
+# Copy source files
+COPY scripts/mock-walrus-server.ts ./scripts/
+COPY scripts/upload.ts ./scripts/
+
+# Build TypeScript
+RUN pnpm build || npx tsc
+
+# Runtime stage
+FROM node:18-alpine
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    curl \
+    dumb-init
+
+# Create app user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S appuser -u 1001
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install production dependencies only
+RUN npm install -g pnpm && \
+    pnpm install --prod --frozen-lockfile && \
+    pnpm store prune
+
+# Copy built application
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/scripts ./scripts
+
+# Create necessary directories
+RUN mkdir -p /app/mock-storage /app/logs && \
+    chown -R appuser:nodejs /app
+
+# Switch to app user
+USER appuser
+
+# Expose port
+EXPOSE 8081
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8081/health || exit 1
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+
+# Run the mock Walrus server
+CMD ["node", "scripts/mock-walrus-server.js"]
